@@ -71,7 +71,7 @@ setTimeZone () {
     echo "Uncommenting the appropriate lines in /etc/locale.gen..."
     sed -i '/#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
     
-    if [[ $city == Bucharest ]]; then
+    if [[ $city == "Bucharest" ]]; then
         sed -i '/#ro_RO.UTF-8 UTF-8/s/^#//' /etc/locale.gen
     fi
 
