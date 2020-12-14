@@ -1,6 +1,4 @@
 #!/usr/bin/sh
-declare -r hostname="archlinux"
-declare -r username="inch"
 
 # Set time (not yet chroot-ed)
 setTime () {
