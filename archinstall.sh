@@ -92,9 +92,9 @@ hostAndUserName() {
     echo "$hostname" > /etc/hostname
 
     echo "Adding required lines to /etc/hosts..."
-    echo "127.0.0.1\t\tlocalhost" >> /etc/hosts
-    echo "::1\t\tlocalhost" >> /etc/hosts
-    echo "127.0.1.1\t\t$hostname.localdomain\t$hostname" >> /etc/hosts
+    echo "127.0.0.1\tlocalhost" >> /etc/hosts
+    echo "::1\tlocalhost" >> /etc/hosts
+    echo "127.0.1.1\t$hostname.localdomain\t$hostname" >> /etc/hosts
 
     echo "\nSet root user password:"
     passwd
