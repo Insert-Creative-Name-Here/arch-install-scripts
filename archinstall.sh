@@ -9,6 +9,12 @@ setTime () {
 }
 
 partitionAndMount() {
+    declare -r $device="/dev/nvme0n1"
+
+    # Wipe filesystem signatures on ${device}
+    echo "Wiping all signatures from ${device}"
+    exec wipefs --all --force ${device} &> /dev/null
+
     (echo "g";  # Creates a gpt partition
     # boot partition
     echo "n";   # Creates new parition
@@ -29,17 +35,19 @@ partitionAndMount() {
     echo "";    # partition no. 3
     echo "";    
     echo "";    # Use the remainder of space
-    echo "q") | fdisk /dev/nvme0n1 
+    echo "w") | fdisk ${device} &> /dev/null
     
-    # Make file system
-    mkfs.fat -F32 /dev/nvme0n1p1
-    mkfs.ext4 /dev/nvme0n1p2
-    mkfs.ext4 /dev/nvme0n1p3
+    echo "Making a FAT32 filesystm on ${device}p1..."
+    mkfs.fat -F32 ${device}p1 &> /dev/null
+    echo "Making an EXT4 filesystem on ${device}p2..."
+    mkfs.ext4 ${device}p2
+    echo "Making an EXT4 filesystem on ${device}p3..."
+    mkfs.ext4 ${device}p3
 
     # Mount filesystem
-    mount /dev/nvme0n1p2 /mnt
+    mount ${device}p2 /mnt
     mkdir /mnt/home
-    mount /dev/nvme0n1p3 /mnt/home
+    mount ${device}p3 /mnt/home
 
     installBasePackages 
 
@@ -51,8 +59,11 @@ partitionAndMount() {
 
 installBasePackages () {
     echo "Installing base packages..."
-    pacstrap /mnt base linux linux-headers linux-firmware
-    pacstrap /mnt linux-lts linux-lts-headers
+    echo | pacstrap /mnt base &> /dev/null
+    echo "Installing latest linux..."
+    echo | pacstrap /mnt linux linux-headers linux-firmware &> /dev/null
+    echo "Installing LTS linux..."
+    echo | pacstrap /mnt linux-lts linux-lts-headers &> /dev/null
 
     return
 }
@@ -63,10 +74,10 @@ setTimeZone () {
     declare city="Bucharest"
 
     echo "Setting timezone to $region/$city..."
-    ln -sf /usr/share/zoneinfo/$region/$city /etc/localtime
+    ln -sf /usr/share/zoneinfo/$region/$city /etc/localtime &> /dev/null
 
     echo "Synchronizing harware clock..."
-    hwclock --systohc
+    hwclock --systohc &> /dev/null
     
     echo "Uncommenting the appropriate lines in /etc/locale.gen..."
     sed -i '/#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
@@ -75,7 +86,6 @@ setTimeZone () {
         sed -i '/#ro_RO.UTF-8 UTF-8/s/^#//' /etc/locale.gen
     fi
 
-    echo "Generating locales..."
     locale-gen
 
     echo "Writing to /etc/locale.conf..."
@@ -101,22 +111,22 @@ hostAndUserName() {
 
     echo "Adding user $username..."
     useradd -m $username
-    echo "Set password for $username:"
     passwd $username
+
     echo "Setting privileges for $username..."
     usermod -xG wheel,audio,video,optical,storage $username
     
     echo "You have to edit the visudoers file manually."
     echo "Uncomment the line with 'wheel ALL=(ALL) ALL'"
     sleep 7
-    EDITPOR=nvim visudo
+    EDITOR=nvim visudo
 
     return
 }
 
 installPackages () {
     echo "Installing useful packages..."
-    pacman -S 'sudo' 'neovim' 'git' 'sed' 'zsh' 'networkmanager'
+    echo | pacman -S 'sudo' 'neovim' 'git' 'sed' 'zsh' 'networkmanager'
 
     echo "Enabling NetworkManager..."
     systemctl enable NetworkManager
@@ -125,7 +135,7 @@ installPackages () {
 }
 
 grubInstallAndConfigure () {
-    pacman -S 'grub' 'efibootmgr' 'dosfstools' 'os-prober' 'mtools'
+    echo | pacman -S 'grub' 'efibootmgr' 'dosfstools' 'os-prober' 'mtools'
 
     echo "Making and mounting /boot/EFI directory..."
     if [[ ! -d /boot/EFI ]]; then
