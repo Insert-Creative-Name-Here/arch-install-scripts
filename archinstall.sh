@@ -59,7 +59,7 @@ partitionAndMount() {
 
 installBasePackages () {
     echo "Installing base packages..."
-    echo | pacstrap /mnt base &> /dev/null
+    (echo; echo) | pacstrap /mnt base base-devel &> /dev/null
     echo "Installing latest linux..."
     echo | pacstrap /mnt linux linux-headers linux-firmware &> /dev/null
     echo "Installing LTS linux..."
@@ -94,6 +94,16 @@ setTimeZone () {
     return
 }
 
+installPackages () {
+    echo "Installing useful packages..."
+    (echo; echo) | pacman -S 'sudo' 'neovim' 'git' 'sed' 'zsh' 'networkmanager'
+
+    echo "Enabling NetworkManager..."
+    systemctl enable NetworkManager
+
+    return
+}
+
 hostAndUserName() {
     declare hostname="archlinux"
     declare username="icnh"
@@ -116,20 +126,8 @@ hostAndUserName() {
     echo "Setting privileges for $username..."
     usermod -xG wheel,audio,video,optical,storage $username
     
-    echo "You have to edit the visudoers file manually."
-    echo "Uncomment the line with 'wheel ALL=(ALL) ALL'"
-    sleep 7
-    EDITOR=nvim visudo
-
-    return
-}
-
-installPackages () {
-    echo "Installing useful packages..."
-    echo | pacman -S 'sudo' 'neovim' 'git' 'sed' 'zsh' 'networkmanager'
-
-    echo "Enabling NetworkManager..."
-    systemctl enable NetworkManager
+    echo "Configuring wheel group to use sudo..."
+    echo '%wheel ALL=(ALL) ALL' | sudo EDITOR='tee -a' visudo
 
     return
 }
