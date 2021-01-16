@@ -54,11 +54,13 @@ hostAndUserName() {
     echo "::1\tlocalhost" >> /etc/hosts
     echo "127.0.1.1\t${hostname}.localdomain\t${hostname}" >> /etc/hosts
 
-    echo "\nSet root user password:"
+    echo
     passwd
 
     echo "Adding user ${username}..."
     useradd -m ${usernam}
+
+    echo
     passwd ${username}
 
     echo "Setting privileges for ${usernam}..."
