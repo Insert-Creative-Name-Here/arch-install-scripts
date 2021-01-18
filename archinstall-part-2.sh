@@ -11,8 +11,8 @@ setTimeZone () {
     echo "Uncommenting the appropriate lines in /etc/locale.gen..."
     sed -i '/#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
     
-    [[ ${city} == "Bucharest" ]]
-        && sed -i '/#ro_RO.UTF-8 UTF-8/s/^#//' /etc/locale.gen
+    [[ ${city} == "Bucharest" ]] &&
+        sed -i '/#ro_RO.UTF-8 UTF-8/s/^#//' /etc/locale.gen
 
     locale-gen
     
@@ -58,12 +58,12 @@ hostAndUserName() {
     passwd
 
     echo "Adding user ${username}..."
-    useradd -m ${usernam}
+    useradd -m ${username}
 
     echo
     passwd ${username}
 
-    echo "Setting privileges for ${usernam}..."
+    echo "Setting privileges for ${username}..."
     usermod -xG wheel,audio,video,optical,storage ${username}
     
     echo "Configuring wheel group..."
