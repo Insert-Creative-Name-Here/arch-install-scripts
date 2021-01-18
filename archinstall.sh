@@ -64,18 +64,17 @@ main() {
     timedatectl set-ntp true
 
     # Call the functions, yadda yadda
-    setTime
-
     partitionAndMount
 
     installBasePackages
 
-    echo "Copying ./inside-chroot.sh to /mnt..."
-    cp ./archins-part-2.sh /mnt
+    declare -r second_script="./archinstall-part-2.sh"
+    echo "Copying ${second_script} to /mnt..."
+    cp ${second_script} /mnt
 
     # $(arch-chroot /mnt) just starts /bin/sh in /mnt; this below runs a
     # the second part of the script
-    arch-chroot /mnt /archinstall-part-2.sh
+    arch-chroot /mnt $second_script
 
     echo "Unmounting /mnt..."
     umount -l /mnt
