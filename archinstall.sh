@@ -1,10 +1,24 @@
 #!/bin/sh
 
-partitionAndMount() {
-    readonly DEVICE='/dev/nvme0n1'
-    readonly BOOT_PARTITION_SIZE='550' # size in MiB
-    readonly ROOT_PARTITION_SIZE='50' # size in GiB
+# Automatically install Arch Linux
 
+## Some config data
+# Drive to install on
+readonly DEVICE='/dev/nvme0n1'
+readonly BOOT_PARTITION_SIZE='550' # size in MiB
+readonly ROOT_PARTITION_SIZE='50' # size in GiB
+
+# Timezone
+readonly REGION='Europe'
+readonly CITY='Bucharest'
+
+# User preferences
+readonly SHELL='zsh'
+readonly USERNAME='icnh'
+readonly HOSTNAME='archlinux'
+
+
+partitionAndMount() {
     # Wipe filesystem signatures on ${DEVICE}
     echo "Wiping all signatures from ${DEVICE}"
     exec wipefs --all --force ${DEVICE} &> /dev/null
@@ -30,14 +44,14 @@ partitionAndMount() {
     echo "";    # make this partition no. 3
     echo "";    
     echo "";    # Use the remainder of space
-    echo "w") | fdisk ${DEVICE} &> /dev/null
+    echo "w") | fdisk ${DEVICE} &>/dev/null
     
     echo "Making a FAT32 filesystm on ${DEVICE}p1..."
-    mkfs.fat -F32 ${DEVICE}p1 &> /dev/null
+    mkfs.fat -F32 ${DEVICE}p1 &>/dev/null
     echo "Making an EXT4 filesystem on ${DEVICE}p2..."
-    mkfs.ext4 ${DEVICE}p2 &> /dev/null
+    mkfs.ext4 ${DEVICE}p2 &>/dev/null
     echo "Making an EXT4 filesystem on ${DEVICE}p3..."
-    mkfs.ext4 ${DEVICE}p3 &> /dev/null
+    mkfs.ext4 ${DEVICE}p3 &>/dev/null
 
     # Mount filesystem
     mount ${DEVICE}p2 /mnt
@@ -52,11 +66,11 @@ partitionAndMount() {
 
 installBasePackages () {
     echo "Installing base packages..."
-    (echo; echo) | pacstrap /mnt base base-devel &> /dev/null
+    yes | pacstrap /mnt base base-devel &> /dev/null
     echo "Installing latest linux..."
-    echo | pacstrap /mnt linux linux-headers linux-firmware &> /dev/null
+    yes | pacstrap /mnt linux linux-headers linux-firmware &> /dev/null
     echo "Installing LTS linux..."
-    echo | pacstrap /mnt linux-lts linux-lts-headers &> /dev/null
+    yes | pacstrap /mnt linux-lts linux-lts-headers &> /dev/null
 
     return
 }
@@ -71,21 +85,18 @@ main() {
     installBasePackages
 
     # Second script must be in a separate file because of how arch-chroot works
-cat <<'END_OF_SECOND_SCRIPT' > /mnt/root/archinstall-part-2.sh
+cat <<END_OF_SECOND_SCRIPT > /mnt/root/archinstall-part-2.sh
 #!/bin/sh
 
 # Set device timezone
 setTimeZone () {
-    declare region="Europe"
-    declare city="Bucharest"
-
-    echo "Setting timezone to ${region}/${city}..."
-    ln -sf /usr/share/zoneinfo/${region}/${city} /etc/localtime &> /dev/null
+    echo "Setting timezone to ${REGION}/${CITY}..."
+    ln -sf /usr/share/zoneinfo/${REGION}/${CITY} /etc/localtime &> /dev/null
 
     echo "Uncommenting the appropriate lines in /etc/locale.gen..."
     sed -i '/#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
     
-    [[ ${city} == "Bucharest" ]] &&
+    [[ ${CITY} == "Bucharest" ]] &&
         sed -i '/#ro_RO.UTF-8 UTF-8/s/^#//' /etc/locale.gen
 
     locale-gen
@@ -108,7 +119,7 @@ installPackages () {
 
     echo "\nInstalling useful packages..."
     pacman -S --noconfirm 'sudo' 'neovim' 'git' 'sed' \
-                            'zsh' 'networkmanager' &> /dev/null
+                            "${SHELL}" 'networkmanager' &> /dev/null
 
     echo "Enabling NetworkManager..."
     systemctl enable NetworkManager
@@ -117,28 +128,25 @@ installPackages () {
 }
 
 hostAndUserName() {
-    declare hostname="archlinux"
-    declare username="icnh"
-
     echo "Adding hostname to /etc/hostname..."
-    echo "${hostname}" > /etc/hostname
+    echo "${HOSTNAME}" > /etc/hostname
 
     echo "Adding required lines to /etc/hosts..."
     echo "127.0.0.1\tlocalhost" >> /etc/hosts
     echo "::1\tlocalhost" >> /etc/hosts
-    echo "127.0.1.1\t${hostname}.localdomain\t${hostname}" >> /etc/hosts
+    echo "127.0.1.1\t${HOSTNAME}.localdomain\t${HOSTNAME}" >> /etc/hosts
 
     echo
     passwd
 
-    echo "Adding user ${username}..."
-    useradd -m ${username}
+    echo "Adding user ${USERNAME}..."
+    useradd -m ${USERNAME}
 
     echo
-    passwd ${username}
+    passwd ${USERNAME}
 
-    echo "Setting privileges for ${username}..."
-    usermod -xG wheel,audio,video,optical,storage ${username}
+    echo "Setting privileges for ${USERNAME}..."
+    usermod -xG wheel,audio,video,optical,storage ${USERNAME}
     
     echo "Configuring wheel group..."
     echo '%wheel ALL=(ALL) ALL' | sudo EDITOR='tee -a' visudo
