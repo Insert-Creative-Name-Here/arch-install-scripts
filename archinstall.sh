@@ -85,7 +85,8 @@ main() {
     installBasePackages
 
     # Second script must be in a separate file because of how arch-chroot works
-cat <<END_OF_SECOND_SCRIPT > /mnt/root/archinstall-part-2.sh
+    readonly SECOND_PART='root/archinstall-p2.sh'
+cat <<END_OF_SECOND_SCRIPT > /mnt/${SECOND_PART}
 #!/bin/sh
 
 # Set device timezone
@@ -175,6 +176,8 @@ main() {
     # Call some more functions, yadda yadda.
     setTimeZone
 
+    installPackages
+
     hostAndUserName
 
     grubInstallAndConfigure
@@ -195,7 +198,10 @@ END_OF_SECOND_SCRIPT
     # arch-chroot [target] just starts /bin/sh in [target]; this below runs a
     # the second part of the script. The second argument must be specified
     # relative to the new root path
-    arch-chroot /mnt /root/archinstall-part-2.sh
+    arch-chroot /mnt /${SECOND_PART}
+
+    echo "Removing second part of the script..."
+    rm -f /mnt/${SECOND_PART}
 
     echo "Unmounting /mnt..."
     umount -l /mnt
