@@ -27,7 +27,7 @@ partitionAndMount() {
 
     # boot partition
     echo "n";   # Creates new parition
-    echo "";    # make this partition no. 1
+    echo "1";    # make this partition no. 1
     echo "";
     echo "+${BOOT_PARTITION_SIZE}M"; # Make a 550MiB partition
     echo "t";   # Choose type
@@ -35,13 +35,13 @@ partitionAndMount() {
 
     # root partition
     echo "n";
-    echo "";    # make this partition no. 2
+    echo "2";    # make this partition no. 2
     echo "";
     echo "+${ROOT_PARTITION_SIZE}G";    # Make a 50GiB partition
 
     # home partition
     echo "n";
-    echo "";    # make this partition no. 3
+    echo "3";    # make this partition no. 3
     echo "";    
     echo "";    # Use the remainder of space
     echo "w") | fdisk ${DEVICE} &>/dev/null
@@ -198,6 +198,7 @@ END_OF_SECOND_SCRIPT
     # arch-chroot [target] just starts /bin/sh in [target]; this below runs a
     # the second part of the script. The second argument must be specified
     # relative to the new root path
+    chmod +x /mnt/${SECOND_PART}
     arch-chroot /mnt /${SECOND_PART}
 
     echo "Removing second part of the script..."
