@@ -27,36 +27,38 @@ partitionAndMount() {
 
     # boot partition
     echo "n";   # Creates new parition
-    echo "1";    # make this partition no. 1
+    echo "1";   # make this partition no. 1
     echo "";
-    echo "+${BOOT_PARTITION_SIZE}M"; # Make a 550MiB partition
+    echo "+${BOOT_PARTITION_SIZE}M";
     echo "t";   # Choose type
     echo "1";   # Choose EFI System
 
     # root partition
     echo "n";
-    echo "2";    # make this partition no. 2
+    echo "2";   # make this partition no. 2
     echo "";
-    echo "+${ROOT_PARTITION_SIZE}G";    # Make a 50GiB partition
+    echo "+${ROOT_PARTITION_SIZE}G";
 
     # home partition
     echo "n";
-    echo "3";    # make this partition no. 3
+    echo "3";   # make this partition no. 3
     echo "";    
     echo "";    # Use the remainder of space
     echo "w") | fdisk ${DEVICE} &>/dev/null
-    
-    echo "Making a FAT32 filesystm on ${DEVICE}p1..."
-    mkfs.fat -F32 ${DEVICE}p1 &>/dev/null
-    echo "Making an EXT4 filesystem on ${DEVICE}p2..."
-    mkfs.ext4 ${DEVICE}p2 &>/dev/null
-    echo "Making an EXT4 filesystem on ${DEVICE}p3..."
-    mkfs.ext4 ${DEVICE}p3 &>/dev/null
+
+    [[ "${DEVICE}" =~ "nvme" ]] && DEVICE+="p"
+
+    echo "Making a FAT32 filesystm on ${DEVICE}1..."
+    mkfs.fat -F32 "${DEVICE}1" &>/dev/null
+    echo "Making an EXT4 filesystem on ${DEVICE}2..."
+    mkfs.ext4 "${DEVICE}2" &>/dev/null
+    echo "Making an EXT4 filesystem on ${DEVICE}3..."
+    mkfs.ext4 "${DEVICE}3" &>/dev/null
 
     # Mount filesystem
-    mount ${DEVICE}p2 /mnt
+    mount "${DEVICE}2" /mnt
     [[ -d /mnt/home ]] || mkdir /mnt/home
-    mount ${DEVICE}p3 /mnt/home
+    mount "${DEVICE}3" /mnt/home
 
     # Generate filesystem table
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -95,7 +97,7 @@ setTimeZone () {
     ln -sf /usr/share/zoneinfo/${REGION}/${CITY} /etc/localtime &> /dev/null
 
     echo "Uncommenting the appropriate lines in /etc/locale.gen..."
-    sed -i '/#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
+    sed -i '/#en_GB.UTF-8 UTF-8/s/^#//' /etc/locale.gen
     
     [[ ${CITY} == "Bucharest" ]] &&
         sed -i '/#ro_RO.UTF-8 UTF-8/s/^#//' /etc/locale.gen
@@ -119,8 +121,8 @@ installPackages () {
     pacman -Syy
 
     echo "\nInstalling useful packages..."
-    pacman -S --noconfirm 'sudo' 'neovim' 'git' 'sed' \
-                            "${SHELL}" 'networkmanager' &> /dev/null
+    pacman -S --noconfirm sudo neovim git sed \
+                            ${SHELL} networkmanager &> /dev/null
 
     echo "Enabling NetworkManager..."
     systemctl enable NetworkManager
